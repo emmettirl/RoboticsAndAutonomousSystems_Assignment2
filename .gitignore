@@ -1,0 +1,17 @@
+# Build directories
+build/
+install/
+log/
+
+# ROS 2 workspace
+.colcon/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# IDE specific files
+.idea/
+.vscode/
