@@ -37,5 +37,5 @@ source /opt/ros/jazzy/setup.bash
 source ~/ros2_ws/install/setup.bash
 colcon build --packages-select ur3_description
 ros2 launch ur3_description ur3_rviz.launch.py
-#ros2 launch ur3_description ur3_gazebo.launch.py
+ros2 launch ur3_description ur3_gazebo.launch.py
 ```
