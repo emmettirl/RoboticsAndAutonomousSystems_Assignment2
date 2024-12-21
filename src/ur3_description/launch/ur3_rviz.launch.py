@@ -114,7 +114,7 @@ def generate_launch_description():
     forward_command_controller_spawner = Node(
         package="controller_manager",
         executable="spawner",
-        arguments=["forward_command_controller"],
+        arguments=["forward_position_controller"],
         output="screen",
     )
 
