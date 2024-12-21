@@ -1,5 +1,6 @@
 Build Project
 
+Installation and Configuration
 ```shell
 sudo apt update && sudo apt install software-properties-common
 sudo add-apt-repository universe
@@ -24,9 +25,6 @@ echo "source /usr/share/colcon_cd/function/colcon_cd-argcomplete.bash" \
 source ~/.bashrc
 sudo rosdep init
 rosdep update
-```
-
-```shell
 sudo apt install ros-jazzy-ros-gz-sim
 sudo apt install ros-jazzy-joint-state-publisher-gui
 sudo apt install ros-jazzy-gazebo-ros
@@ -34,6 +32,7 @@ rosdep install -i --from-path src --rosdistro jazzy -y
 ```
 
 
+Run RVIZ
 ```bash
 source /opt/ros/jazzy/setup.bash
 source ~/ros2_ws/install/setup.bash
@@ -41,6 +40,7 @@ colcon build --symlink-install
 ros2 launch ur3_description ur3_rviz.launch.py
 ```
 
+Run Gazebo
 ```bash
 source /opt/ros/jazzy/setup.bash
 source ~/ros2_ws/install/setup.bash
