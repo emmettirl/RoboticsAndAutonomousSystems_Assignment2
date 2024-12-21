@@ -14,9 +14,11 @@ sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null
 sudo apt update && sudo apt install ros-dev-tools
 sudo apt upgrade
 sudo apt install ros-jazzy-desktop
+sudo apt install python3-colcon-common-extensions
 echo "source /opt/ros/jazzy/setup.bash" >> ~/.bashrc
 echo "source /usr/share/colcon_cd/function/colcon_cd.sh" >> ~/.bashrc
 echo "export _colcon_cd_root=/opt/ros/jazzy/" >> ~/.bashrc
+echo "source /usr/share/colcon_argcomplete/hook/colcon-argcomplete.bash" >> ~/.bashrc
 echo "source /usr/share/colcon_cd/function/colcon_cd-argcomplete.bash" \
 >> ~/.bashrc
 source ~/.bashrc
@@ -28,14 +30,19 @@ rosdep update
 sudo apt install ros-jazzy-ros-gz-sim
 sudo apt install ros-jazzy-joint-state-publisher-gui
 sudo apt install ros-jazzy-gazebo-ros
+rosdep install -i --from-path src --rosdistro jazzy -y
 ```
 
 
 ```bash
-rosdep install -i --from-path src --rosdistro jazzy -y
 source /opt/ros/jazzy/setup.bash
 source ~/ros2_ws/install/setup.bash
-colcon build --packages-select ur3_description
+colcon build --symlink-install
 ros2 launch ur3_description ur3_rviz.launch.py
+```
+
+```bash
+source /opt/ros/jazzy/setup.bash
+source ~/ros2_ws/install/setup.bash
 ros2 launch ur3_description ur3_gazebo.launch.py
 ```
