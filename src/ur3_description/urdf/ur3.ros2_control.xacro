@@ -4,12 +4,9 @@
   <xacro:macro name="ur3_ros2_control" params="name prefix">
 
     <ros2_control name="${name}" type="system">
-        <hardware>
-            <plugin>gz_ros2_control/GazeboSimSystem</plugin>
-        </hardware>
-        <controller_manager name="controller_manager">
-            <param name="update_rate">100</param>
-        </controller_manager>
+
+      <!-- add controller info here -->
+
     </ros2_control>
 
   </xacro:macro>

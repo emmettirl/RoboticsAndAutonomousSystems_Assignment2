@@ -1,5 +1,5 @@
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
+from launch.actions import DeclareLaunchArgument
 from launch.substitutions import Command, FindExecutable, PathJoinSubstitution, LaunchConfiguration
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
@@ -96,43 +96,10 @@ def generate_launch_description():
         arguments=["-d", rviz_config_file],
     )
 
-    controller_manager_node = Node(
-        package="controller_manager",
-        executable="ros2_control_node",
-        parameters=[robot_description,
-                    PathJoinSubstitution([FindPackageShare("ur3_description"), "config", "ur3_controllers.yaml"])],
-        output="both",
-    )
-
-    joint_state_broadcaster_spawner = Node(
-        package="controller_manager",
-        executable="spawner",
-        arguments=["joint_state_broadcaster"],
-        output="screen",
-    )
-
-    forward_command_controller_spawner = Node(
-        package="controller_manager",
-        executable="spawner",
-        arguments=["forward_position_controller"],
-        output="screen",
-    )
-
-    joint_trajectory_controller_spawner = Node(
-        package="controller_manager",
-        executable="spawner",
-        arguments=["joint_trajectory_controller"],
-        output="screen",
-    )
-
     nodes = [
         joint_state_publisher_node,
         robot_state_publisher_node,
         rviz_node,
-        controller_manager_node,
-        joint_state_broadcaster_spawner,
-        forward_command_controller_spawner,
-        joint_trajectory_controller_spawner,
     ]
 
     return LaunchDescription(declared_arguments + nodes)

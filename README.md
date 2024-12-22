@@ -45,19 +45,19 @@ Run RVIZ
 source /opt/ros/jazzy/setup.bash
 colcon build --symlink-install
 source ~/ros2_ws/install/setup.bash
-ros2 launch ur3_description_2 ur3_rviz.launch.py
+ros2 launch ur3_description ur3_rviz.launch.py
 ```
 
 Run Gazebo
 ```bash
 source /opt/ros/jazzy/setup.bash
-colcon build --packages-select ur3_description_2 --symlink-install
+colcon build --packages-select ur3_description --symlink-install
 source ~/ros2_ws/install/setup.bash
-ros2 launch ur3_description_2 ur3_gazebo.launch.py
+ros2 launch ur3_description ur3_gazebo.launch.py
 ```
 
 
 Clean Installation
 ```shell
-sudo rm -rf build install
+sudo rm -rf build install log
 ```
