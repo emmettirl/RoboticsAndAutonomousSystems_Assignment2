@@ -1,6 +1,5 @@
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
-from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.actions import DeclareLaunchArgument
 from launch.substitutions import Command, FindExecutable, PathJoinSubstitution, LaunchConfiguration
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
@@ -46,13 +45,6 @@ def generate_launch_description():
     safety_pos_margin = LaunchConfiguration("safety_pos_margin")
     safety_k_position = LaunchConfiguration("safety_k_position")
 
-    gazebo = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            [PathJoinSubstitution([FindPackageShare("ros_gz_sim"), "launch", "gz_sim.launch.py"])]
-        ),
-        launch_arguments={"gz_args": " -r -v 3 empty.sdf --render-engine ogre"}.items(),
-    )
-
     # Get URDF via xacro
     robot_description_content = Command(
         [
@@ -80,79 +72,34 @@ def generate_launch_description():
     )
     robot_description = {"robot_description": robot_description_content}
 
+    rviz_config_file = PathJoinSubstitution(
+        [FindPackageShare("ur3_description"), "rviz", "ur3.rviz"]
+    )
+
+    joint_state_publisher_node = Node(
+        package="joint_state_publisher_gui",
+        executable="joint_state_publisher_gui",
+    )
+
     robot_state_publisher_node = Node(
         package="robot_state_publisher",
         executable="robot_state_publisher",
         output="both",
         parameters=[robot_description],
     )
-    
-    pedestal = PathJoinSubstitution(
-        [FindPackageShare("ur3_description"), "models", "pedestal.urdf"]
-    )    
-    spawn_pedestal = Node(
-        package="ros_gz_sim",
-        executable="create",
-        arguments=["-name", "pedestal", "-file", pedestal],
-        output="screen",
-    )
 
-    table = PathJoinSubstitution(
-        [FindPackageShare("ur3_description"), "models", "table.urdf"]
-    ) 
-    spawn_table = Node(
-        package="ros_gz_sim",
-        executable="create",
-        arguments=["-name", "table", "-file", table, "-y", "0.5"],
-        output="screen",
-    )
-
-    cube = PathJoinSubstitution(
-        [FindPackageShare("ur3_description"), "models", "cube.sdf"]
-    ) 
-    spawn_cube = Node(
-        package="ros_gz_sim",
-        executable="create",
-        arguments=["-name", "cube", "-file", cube, "-x", "0.03", "-y", "0.385", "-z", "0.3"],
-        output="screen",
-    )
-
-    spawn_robot = Node(
-        package="ros_gz_sim",
-        executable="create",
-        arguments=["-topic", "robot_description", "-name", "ur3_system_position", "-z", "0.3"],
-        output="screen",
-    )
-
-    controller_manager_node = Node(
-        package="controller_manager",
-        executable="ros2_control_node",
-        parameters=[robot_description, {"use_sim_time": True}],
-        output="screen",
-    )
-
-    joint_state_broadcaster_spawner = Node(
-        package="controller_manager",
-        executable="spawner",
-        arguments=["joint_state_broadcaster", "--controller-manager", "/controller_manager"],
-    )
-
-    robot_controller_spawner = Node(
-        package="controller_manager",
-        executable="spawner",
-        arguments=["forward_position_controller", "--controller-manager", "/controller_manager"],
+    rviz_node = Node(
+        package="rviz2",
+        executable="rviz2",
+        name="rviz2",
+        output="log",
+        arguments=["-d", rviz_config_file],
     )
 
     nodes = [
-        gazebo,
+        joint_state_publisher_node,
         robot_state_publisher_node,
-        spawn_pedestal,
-        spawn_table,
-        spawn_cube,
-        spawn_robot,
-        joint_state_broadcaster_spawner,
-        robot_controller_spawner,
-        controller_manager_node,
+        rviz_node,
     ]
 
     return LaunchDescription(declared_arguments + nodes)

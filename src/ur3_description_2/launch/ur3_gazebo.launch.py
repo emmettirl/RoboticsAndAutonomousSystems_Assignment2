@@ -124,13 +124,6 @@ def generate_launch_description():
         output="screen",
     )
 
-    controller_manager_node = Node(
-        package="controller_manager",
-        executable="ros2_control_node",
-        parameters=[robot_description, {"use_sim_time": True}],
-        output="screen",
-    )
-
     joint_state_broadcaster_spawner = Node(
         package="controller_manager",
         executable="spawner",
@@ -152,7 +145,6 @@ def generate_launch_description():
         spawn_robot,
         joint_state_broadcaster_spawner,
         robot_controller_spawner,
-        controller_manager_node,
     ]
 
     return LaunchDescription(declared_arguments + nodes)
