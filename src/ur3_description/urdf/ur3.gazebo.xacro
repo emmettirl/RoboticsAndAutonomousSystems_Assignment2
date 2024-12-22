@@ -1,8 +1,54 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
 
-  <gazebo>
-    <!-- add plugin info here -->
-  </gazebo>
+  <!-- ros_control plugin -->
+    <gazebo>
+        <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+            <parameters>$(find ur3_description)/config/rrbot_controllers.yaml</parameters>
+        </plugin>
+    </gazebo>
+
+  <xacro:macro name="ur3_gazebo">
+    <!-- Base Link -->
+    <gazebo reference="base_link">
+      <material>Gazebo/Gray</material>
+    </gazebo>
+    <!-- Shoulder Link -->
+    <gazebo reference="shoulder_link">
+      <mu1>0.2</mu1>
+      <mu2>0.2</mu2>
+      <material>Gazebo/Blue</material>
+    </gazebo>
+    <!-- Upper Arm Link -->
+    <gazebo reference="upper_arm_link">
+      <mu1>0.2</mu1>
+      <mu2>0.2</mu2>
+      <material>Gazebo/Green</material>
+    </gazebo>
+    <!-- Forearm Link -->
+    <gazebo reference="forearm_link">
+      <mu1>0.2</mu1>
+      <mu2>0.2</mu2>
+      <material>Gazebo/Red</material>
+    </gazebo>
+    <!-- Wrist 1 Link -->
+    <gazebo reference="wrist_1_link">
+      <mu1>0.2</mu1>
+      <mu2>0.2</mu2>
+      <material>Gazebo/Yellow</material>
+    </gazebo>
+    <!-- Wrist 2 Link -->
+    <gazebo reference="wrist_2_link">
+      <mu1>0.2</mu1>
+      <mu2>0.2</mu2>
+      <material>Gazebo/Orange</material>
+    </gazebo>
+    <!-- Wrist 3 Link -->
+    <gazebo reference="wrist_3_link">
+      <mu1>0.2</mu1>
+      <mu2>0.2</mu2>
+      <material>Gazebo/Purple</material>
+    </gazebo>
+  </xacro:macro>
 
 </robot>

@@ -15,12 +15,16 @@ sudo apt update && sudo apt install -y \
   ros-dev-tools \
   python3-colcon-common-extensions \
   ros-jazzy-desktop \
+  ros-jazzy-xacro \
   ros-jazzy-ros-gz-sim \
   ros-jazzy-joint-state-publisher-gui \
   ros-jazzy-gazebo-ros \
   ros-jazzy-ros2-control \
   ros-jazzy-ros2-controllers \
-  ros-jazzy-ur-robot-driver
+  ros-jazzy-ur-robot-driver \
+  ros-jazzy-gz-ros2-control \
+  ros-jazzy-ros-gz-sim \
+  
 
 sudo apt upgrade -y
 
@@ -60,4 +64,11 @@ ros2 launch ur3_description ur3_gazebo.launch.py
 Clean Installation
 ```shell
 sudo rm -rf build install log
+```
+
+check for controller
+```shell
+ros2 node list
+ros2 control list_hardware_interfaces
+ros2 control list_controllers
 ```

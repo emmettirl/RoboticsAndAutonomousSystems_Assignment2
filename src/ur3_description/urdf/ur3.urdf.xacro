@@ -64,10 +64,12 @@
      <origin xyz="0 0 0" rpy="0 0 0" />          <!-- position robot in the world -->
    </xacro:ur_robot>
 
-   <!-- call ur3 ros2_control macro -->
+   <!-- call ur3_ros2_control macro -->
+   <xacro:include filename="$(find ur3_description)/urdf/ur3.ros2_control.xacro" />
    <xacro:ur3_ros2_control name="$(arg name)" prefix="$(arg prefix)"/>
 
    <!-- gazebo classic plugin -->
    <xacro:include filename="$(find ur3_description)/urdf/ur3.gazebo.xacro" />
+   <xacro:ur3_gazebo/>
 
 </robot>
