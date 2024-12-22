@@ -4,7 +4,7 @@
   <!-- ros_control plugin -->
     <gazebo>
         <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
-            <parameters>$(find ur3_description)/config/rrbot_controllers.yaml</parameters>
+            <parameters>$(find ur3_description)/config/ur3_controllers.yaml</parameters>
         </plugin>
     </gazebo>
 
