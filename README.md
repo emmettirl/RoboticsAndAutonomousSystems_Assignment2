@@ -1,5 +1,3 @@
-Build Project
-
 Installation and Configuration
 ```shell
 sudo apt update && sudo apt install -y \
@@ -36,6 +34,13 @@ echo "source /usr/share/colcon_cd/function/colcon_cd-argcomplete.bash" >> ~/.bas
 source ~/.bashrc
 ```
 
+Make Package
+```shell
+cd ~/ros2_ws/src
+ros2 pkg create --build-type ament_cmake ur3_description
+ros2 pkg create --build-type ament_cmake ur3_move
+```
+
 
 ``` bash
 sudo rosdep init
@@ -55,11 +60,16 @@ ros2 launch ur3_description ur3_rviz.launch.py
 Run Gazebo
 ```bash
 source /opt/ros/jazzy/setup.bash
-colcon build --packages-select ur3_description --symlink-install
+colcon build --packages-select ur3_description ur3_move --symlink-install
 source ~/ros2_ws/install/setup.bash
 ros2 launch ur3_description ur3_gazebo.launch.py
 ```
 
+Run Move
+```bash
+source ~/ros2_ws/install/setup.bash
+ros2 launch ur3_move userCommandNode.launch.py
+```
 
 Clean Installation
 ```shell
