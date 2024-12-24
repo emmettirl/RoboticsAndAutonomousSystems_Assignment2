@@ -72,3 +72,9 @@ ros2 node list
 ros2 control list_hardware_interfaces
 ros2 control list_controllers
 ```
+
+test movement
+```shell
+ros2 topic pub /forward_position_controller/commands std_msgs/msg/Float64MultiArray "data: [0.5, -0.5, 0.5, -0.5, 0.5]"
+```
+
