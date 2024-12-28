@@ -88,7 +88,8 @@ source ~/ros2_ws/install/setup.bash
 #ros2 run ur3_move userCommandNode.py
 #ros2 run ur3_move userInputNode.py
 #ros2 run ur3_move UR3MoveNode.py
-ros2 run ur3_move UR3MoveActionClient.py
+#ros2 run ur3_move UR3MoveActionClient.py
+ros2 run ur3_move UR3RLEnvironment.py
 ```
 Source the ROS2 setup.bash file, then run the desired node. Only one of the above should be run at a time. Comment out any others.
 
