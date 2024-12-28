@@ -11,7 +11,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclpy REQUIRED)
 
 install(
-    PROGRAMS src/userCommandNode.py
+    PROGRAMS src/userCommandNode.py src/userInputNode.py
     DESTINATION lib/${PROJECT_NAME}
 )
 

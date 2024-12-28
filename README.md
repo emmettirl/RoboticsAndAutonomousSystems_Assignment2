@@ -58,10 +58,14 @@ source ~/ros2_ws/install/setup.bash
 ros2 launch ur3_description ur3_rviz.launch.py
 ```
 
-Run Gazebo
+Build Project
 ```bash
 source /opt/ros/jazzy/setup.bash
 colcon build --packages-select ur3_description ur3_move --symlink-install
+```
+
+Run Gazebo
+```bash
 source ~/ros2_ws/install/setup.bash
 ros2 launch ur3_description ur3_gazebo.launch.py
 ```
@@ -70,7 +74,8 @@ Run Move
 ```bash
 source ~/ros2_ws/install/setup.bash
 #ros2 launch ur3_move userCommandNode.launch.py
-ros2 run ur3_move userCommandNode
+#ros2 run ur3_move userCommandNode.py
+ros2 run ur3_move userInputNode.py
 ```
 
 Clean Installation
