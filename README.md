@@ -76,7 +76,8 @@ Run Move
 ```bash
 source ~/ros2_ws/install/setup.bash
 #ros2 run ur3_move userCommandNode.py
-ros2 run ur3_move userInputNode.py
+#ros2 run ur3_move userInputNode.py
+ros2 run ur3_move UR3MoveNode.py
 ```
 
 

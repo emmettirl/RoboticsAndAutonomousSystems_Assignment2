@@ -7,6 +7,8 @@ from std_msgs.msg import Float64MultiArray
 import threading
 import time
 import pandas as pd
+import numpy as np
+
 
 result_wait_time = 10
 
@@ -59,8 +61,9 @@ class UserInputNode(Node):
                     msg = Float64MultiArray()
                     msg.data = joint_values
                     self.publisher_.publish(msg)
-                    self.get_logger().info(f'Published: {msg.data}')
-                    time.sleep(result_wait_time)  # Wait for the movement to complete
+                    formatted_values = [f"{val:.2f}" for val in msg.data]
+                    self.get_logger().info(f'Published: {formatted_values}')
+                    time.sleep(result_wait_time)
                     self.print_final_positions()
         except KeyboardInterrupt:
             self.get_logger().info('Node interrupted and shutting down...')
@@ -85,18 +88,44 @@ class UserInputNode(Node):
         df = df.round({'Actual Position': 4, 'Desired Position': 4, 'Error': 4})
         print('\n', 'Result:', '\n', df, '\n')
 
-        end_effector_position, end_effector_orientation = self.get_end_effector_pose()
-        self.get_logger().info(f'End effector position: {end_effector_position}')
-        self.get_logger().info(f'End effector orientation: {end_effector_orientation}')
+        end_effector_transformation = self.get_end_effector_pose()
+        df_transformation = pd.DataFrame(end_effector_transformation, columns=['x', 'y', 'z', 'w'],
+                                         index=['x', 'y', 'z', 'w'])
+        df_transformation = df_transformation.round(4)
+        print('End effector transformation matrix:')
+        print(df_transformation)
 
-        end_effector_position, end_effector_orientation = self.get_end_effector_pose()
-        self.get_logger().info(f'End effector position: {end_effector_position}')
-        self.get_logger().info(f'End effector orientation: {end_effector_orientation}')
 
     def get_end_effector_pose(self):
-        # Placeholder function to get the end effector position and orientation
-        # You need to implement this based on your specific setup
-        return (0.0, 0.0, 0.0), (0.0, 0.0, 0.0, 1.0)
+        # Define the transformation matrices for each joint
+        def transformation_matrix(joint_angle, joint_offset, link_length, twist_angle):
+            return np.array([
+                [np.cos(joint_angle), -np.sin(joint_angle) * np.cos(twist_angle),
+                 np.sin(joint_angle) * np.sin(twist_angle), link_length * np.cos(joint_angle)],
+                [np.sin(joint_angle), np.cos(joint_angle) * np.cos(twist_angle),
+                 -np.cos(joint_angle) * np.sin(twist_angle), link_length * np.sin(joint_angle)],
+                [0, np.sin(twist_angle), np.cos(twist_angle), joint_offset],
+                [0, 0, 0, 1]
+            ])
+
+        # Example DH parameters for a 6-DOF robot arm (you need to replace these with your actual parameters)
+        dh_params = [
+            (self.current_joint_positions.get('shoulder_pan_joint', 0.0), 0.0, 0.1, np.pi / 2),
+            (self.current_joint_positions.get('shoulder_lift_joint', 0.0), 0.0, 0.5, 0.0),
+            (self.current_joint_positions.get('elbow_joint', 0.0), 0.0, 0.3, 0.0),
+            (self.current_joint_positions.get('wrist_1_joint', 0.0), 0.0, 0.2, np.pi / 2),
+            (self.current_joint_positions.get('wrist_2_joint', 0.0), 0.0, 0.1, -np.pi / 2),
+            (self.current_joint_positions.get('wrist_3_joint', 0.0), 0.0, 0.1, 0.0)
+        ]
+
+        # Initialize the final transformation matrix as an identity matrix
+        final_transformation = np.eye(4)
+
+        # Multiply the transformation matrices of each joint
+        for params in dh_params:
+            final_transformation = np.dot(final_transformation, transformation_matrix(*params))
+
+        return final_transformation
 
 
 def main(args=None):
