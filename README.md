@@ -63,6 +63,7 @@ Clean Installation
 ```shell
 sudo rm -rf build install log
 ```
+Used to wipe the Build Install and Log directories in the current directory to start fresh.
 
 
 Build Project
@@ -70,26 +71,36 @@ Build Project
 source /opt/ros/jazzy/setup.bash
 colcon build --packages-select ur3_description ur3_move --symlink-install
 ```
-
+Source the ROS2 setup.bash file, then build the project using colcon build.
 
 Run Gazebo
 ```bash
 source ~/ros2_ws/install/setup.bash
 ros2 launch ur3_description ur3_gazebo.launch.py
 ```
+Source the ROS2 setup.bash file, then launch the ur3_gazebo.launch.py file.
 
 
 Run Move
 ```bash
 source ~/ros2_ws/install/setup.bash
+
 #ros2 run ur3_move userCommandNode.py
 #ros2 run ur3_move userInputNode.py
-#ros2 run ur3_move UR3MoveNode.py # Requires the joint_trajectory_controller_spawner to be disabled in ur3_gazebo.launch.py
-ros2 run ur3_move UR3MoveActionClient.py # Requires the robot_controller_spawner to be disabled in ur3_gazebo.launch.py 
+#ros2 run ur3_move UR3MoveNode.py
+ros2 run ur3_move UR3MoveActionClient.py
 ```
+Source the ROS2 setup.bash file, then run the desired node. Only one of the above should be run at a time. Comment out any others.
+
+UR3MoveNode.py requires the joint_trajectory_controller_spawner to be disabled in ur3_gazebo.launch.py
+UR3MoveActionClient.py # requires the robot_controller_spawner to be disabled in ur3_gazebo.launch.py 
+This is done by comment out the controller spawner in the launch file, and commenting the name out of the list of Nodes.
+
 [ur3_gazebo.launch.py](src/ur3_description/launch/ur3_gazebo.launch.py)
 
 
+
+[//]: # (Misc troubleshooting and testing)
 
 [//]: # (check for controller)
 [//]: # (```shell)
