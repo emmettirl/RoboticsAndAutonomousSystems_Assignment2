@@ -7,6 +7,19 @@ from control_msgs.action import FollowJointTrajectory
 from trajectory_msgs.msg import JointTrajectoryPoint
 import numpy as np
 import random
+import time
+
+SLEEP_TIME = 2
+STEP_SIZE = 0.2
+MAX_ITERATIONS = 100
+LEARNING_RATE = 0.1
+DISCOUNT_FACTOR = 0.99
+EXPLORATION_RATE = 0.1
+GOAL_POSITION = np.array([0.03, 0.385, 0.03])
+DISTANCE_THRESHOLD = 0.02
+REWARD_GOAL = 100
+REWARD_STEP = -1
+
 
 class UR3RLEnvironment(Node):
     def __init__(self):
@@ -14,78 +27,68 @@ class UR3RLEnvironment(Node):
         self._action_client = ActionClient(self, FollowJointTrajectory, '/joint_trajectory_position_controller/follow_joint_trajectory')
         self.get_logger().info('UR3RLEnvironment initialized')
         self.joint_positions = [0.0] * 6
-        self.goal_position = np.array([0.03, 0.385, 0.03])
-        self.max_iterations = 100
+        self.goal_position = GOAL_POSITION
+        self.max_iterations = MAX_ITERATIONS
         self.current_iteration = 0
         self.q_table = {}
-        self.alpha = 0.1  # Learning rate
-        self.gamma = 0.99  # Discount factor
-        self.epsilon = 0.1  # Exploration rate
+        self.alpha = LEARNING_RATE
+        self.gamma = DISCOUNT_FACTOR
+        self.epsilon = EXPLORATION_RATE
+        self.initial_distance_to_goal = None
 
     def reset(self):
         """Reset the environment to the initial state."""
-        self.get_logger().info('Resetting environment...')
         self.reset_environment()
         self.joint_positions = [0.0] * 6
         self.current_iteration = 0
+        self.initial_distance_to_goal = np.linalg.norm(self.calculate_end_effector_position() - self.goal_position)
         return self.get_obs()
 
     def step(self, action):
         """Take an action in the environment and return the new state, reward, and done flag."""
-        self.get_logger().info(f'Taking action: {action}')
         self.set_action(action)
         state = self.get_obs()
         reward = self.compute_reward()
         done = self.is_done()
-        self.get_logger().info(f'Step result - State: {state}, Reward: {reward}, Done: {done}')
         return state, reward, done
 
     def set_action(self, action):
         """Define what each action will do."""
         joint_index = action // 2
         direction = 1 if action % 2 == 0 else -1
-        self.joint_positions[joint_index] += direction * 0.1
-        self.get_logger().info(f'Setting action - Joint index: {joint_index}, Direction: {direction}, Joint positions: {self.joint_positions}')
+        self.joint_positions[joint_index] += direction * STEP_SIZE
         self.send_goal(self.joint_positions)
 
     def get_obs(self):
         """Return current observation/state."""
-        self.get_logger().info(f'Getting observation - Joint positions: {self.joint_positions}')
         return self.joint_positions
 
     def is_done(self):
         """Return true if current episode has finished, false otherwise."""
-        self.current_iteration += 1
-        if self.current_iteration >= self.max_iterations:
-            self.get_logger().info('Episode done - Max iterations reached')
-            return True
         end_effector_position = self.calculate_end_effector_position()
         distance_to_goal = np.linalg.norm(end_effector_position - self.goal_position)
-        done = distance_to_goal < 0.02
-        self.get_logger().info(f'Checking if done - End effector position: {end_effector_position}, Distance to goal: {distance_to_goal}, Done: {done}')
-        return done
+        done = distance_to_goal < DISTANCE_THRESHOLD
+        if done:
+            self.get_logger().info(
+                f'Goal achieved - End effector position: {end_effector_position}, Distance to goal: {distance_to_goal}')
+        return done or self.current_iteration >= self.max_iterations
 
     def compute_reward(self):
         """Return the reward for each step."""
         if self.is_done():
             end_effector_position = self.calculate_end_effector_position()
             distance_to_goal = np.linalg.norm(end_effector_position - self.goal_position)
-            if distance_to_goal < 0.02:
-                self.get_logger().info('Reward computed - Goal reached')
-                return 100
-        self.get_logger().info('Reward computed - Step penalty')
-        return -1
+            if distance_to_goal < DISTANCE_THRESHOLD:
+                return REWARD_GOAL
+        return REWARD_STEP
 
     def reset_environment(self):
         """Return robot to its initial pose (all joints at 0.0 radians)."""
-        self.get_logger().info('Resetting environment to initial pose')
         self.send_goal([0.0] * 6)
 
     def send_goal(self, joint_positions):
         """Send a goal to the robot."""
-        self.get_logger().info('Waiting for action server...')
         self._action_client.wait_for_server()
-        self.get_logger().info('Action server available, sending goal...')
 
         goal_msg = FollowJointTrajectory.Goal()
         goal_msg.trajectory.joint_names = [
@@ -98,7 +101,6 @@ class UR3RLEnvironment(Node):
         point.time_from_start = rclpy.duration.Duration(seconds=1.0).to_msg()
         goal_msg.trajectory.points = [point]
 
-        self.get_logger().info(f'Sending goal: {goal_msg}')
         self._send_goal_future = self._action_client.send_goal_async(goal_msg, feedback_callback=self.feedback_callback)
         self._send_goal_future.add_done_callback(self.goal_response_callback)
 
@@ -108,22 +110,16 @@ class UR3RLEnvironment(Node):
             self.get_logger().info('Goal rejected')
             return
 
-        self.get_logger().info('Goal accepted')
         self._get_result_future = goal_handle.get_result_async()
         self._get_result_future.add_done_callback(self.get_result_callback)
 
     def feedback_callback(self, feedback_msg):
-        feedback = feedback_msg.feedback
-        self.get_logger().info(f'Received feedback: {feedback}')
+        pass
 
     def get_result_callback(self, future):
         result = future.result().result
-        self.get_logger().info(f'Result: {result}')
-        # Implement result handling logic here
         if result.error_code == FollowJointTrajectory.Result.SUCCESSFUL:
             self.get_logger().info('Goal reached successfully')
-        else:
-            self.get_logger().info(f'Goal failed with error code: {result.error_code}')
 
     def calculate_end_effector_position(self):
         """Calculate the end effector position based on the current joint positions."""
@@ -133,9 +129,9 @@ class UR3RLEnvironment(Node):
                 [np.cos(joint_angle), -np.sin(joint_angle) * np.cos(twist_angle),
                  np.sin(joint_angle) * np.sin(twist_angle), link_length * np.cos(joint_angle)],
                 [np.sin(joint_angle), np.cos(joint_angle) * np.cos(twist_angle),
+                 -np.cos(joint_angle) * np.sin(twist_angle), link_length * np.sin(joint_angle)],
                 [0, np.sin(twist_angle), np.cos(twist_angle), joint_offset],
                 [0, 0, 0, 1]
-                 -np.cos(joint_angle) * np.sin(twist_angle), link_length * np.sin(joint_angle)],
             ])
 
         # Example DH parameters for a 6-DOF robot arm (you need to replace these with your actual parameters)
@@ -157,7 +153,6 @@ class UR3RLEnvironment(Node):
 
         # Extract the position of the end effector from the final transformation matrix
         end_effector_position = final_transformation[:3, 3]
-        self.get_logger().info(f'Calculated end effector position: {end_effector_position}')
         return end_effector_position
 
     def discretize_state(self, state):
@@ -172,7 +167,6 @@ class UR3RLEnvironment(Node):
         else:
             action = max(self.q_table.get(state, {}), key=self.q_table.get(state, {}).get,
                          default=random.randint(0, 11))
-        self.get_logger().info(f'Chosen action: {action}')
         return action
 
     def update_q_table_q_learning(self, state, action, reward, next_state):
@@ -187,7 +181,6 @@ class UR3RLEnvironment(Node):
         td_target = reward + self.gamma * self.q_table[next_state][best_next_action]
         td_error = td_target - self.q_table[state][action]
         self.q_table[state][action] += self.alpha * td_error
-        self.get_logger().info(f'Updated Q-table using Q-learning - State: {state}, Action: {action}, Reward: {reward}, Next state: {next_state}')
 
     def update_q_table_sarsa(self, state, action, reward, next_state, next_action):
         """Update Q-table using SARSA."""
@@ -200,7 +193,6 @@ class UR3RLEnvironment(Node):
         td_target = reward + self.gamma * self.q_table[next_state][next_action]
         td_error = td_target - self.q_table[state][action]
         self.q_table[state][action] += self.alpha * td_error
-        self.get_logger().info(f'Updated Q-table using SARSA - State: {state}, Action: {action}, Reward: {reward}, Next state: {next_state}, Next action: {next_action}')
 
     def train(self, num_episodes):
         for episode in range(num_episodes):
@@ -212,6 +204,12 @@ class UR3RLEnvironment(Node):
                 next_state, reward, done = self.step(action)
                 self.update_q_table_q_learning(state, action, reward, next_state)
                 state = next_state
+                self.current_iteration += 1  # Increment here
+                distance_to_goal = np.linalg.norm(self.calculate_end_effector_position() - self.goal_position)
+                percentage_covered = 100 * (1 - distance_to_goal / self.initial_distance_to_goal)
+                self.get_logger().info(
+                    f'Iteration: {self.current_iteration}, Reward {reward:.2f} Distance to goal: {distance_to_goal:.2f}, Percentage covered: {percentage_covered:.2f}%')
+                time.sleep(SLEEP_TIME)
             self.get_logger().info(f'Episode {episode + 1} finished')
 
 def main(args=None):
