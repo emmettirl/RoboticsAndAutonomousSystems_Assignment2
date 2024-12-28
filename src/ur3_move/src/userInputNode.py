@@ -10,6 +10,7 @@ class UserInputNode(Node):
         self.publisher_ = self.create_publisher(Float64MultiArray, '/forward_position_controller/commands', 10)
         self.get_logger().info('Node has been started. Waiting for user input...')
         self.joint_names = [
+            'shoulder_pan_joint',
             'shoulder_lift_joint',
             'elbow_joint',
             'wrist_1_joint',

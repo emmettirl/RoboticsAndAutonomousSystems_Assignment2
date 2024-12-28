@@ -14,6 +14,7 @@ controller_manager:
 forward_position_controller:
   ros__parameters:
     joints:
+      - shoulder_pan_joint
       - shoulder_lift_joint
       - elbow_joint
       - wrist_1_joint
@@ -24,6 +25,7 @@ forward_position_controller:
 joint_trajectory_position_controller:
   ros__parameters:
     joints:
+      - shoulder_pan_joint
       - shoulder_lift_joint
       - elbow_joint
       - wrist_1_joint

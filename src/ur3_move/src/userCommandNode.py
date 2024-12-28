@@ -4,7 +4,6 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float64MultiArray
 import random
-import time
 
 class userCommandNode(Node):
     def __init__(self):
@@ -14,7 +13,7 @@ class userCommandNode(Node):
 
     def publish_random_joint_values(self):
         msg = Float64MultiArray()
-        msg.data = [random.uniform(-1.0, 1.0) for _ in range(5)]
+        msg.data = [random.uniform(-1.0, 1.0) for _ in range(6)]
         self.publisher_.publish(msg)
         self.get_logger().info(f'Publishing: {msg.data}')
 

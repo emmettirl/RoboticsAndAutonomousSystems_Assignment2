@@ -73,7 +73,6 @@ ros2 launch ur3_description ur3_gazebo.launch.py
 Run Move
 ```bash
 source ~/ros2_ws/install/setup.bash
-#ros2 launch ur3_move userCommandNode.launch.py
 #ros2 run ur3_move userCommandNode.py
 ros2 run ur3_move userInputNode.py
 ```
