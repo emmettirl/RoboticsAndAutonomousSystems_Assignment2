@@ -22,6 +22,7 @@ sudo apt update && sudo apt install -y \
   ros-jazzy-ur-robot-driver \
   ros-jazzy-gz-ros2-control \
   ros-jazzy-ros-gz-sim \
+  ros-jazzy-ros-gz \
   
 
 sudo apt upgrade -y
@@ -68,7 +69,8 @@ ros2 launch ur3_description ur3_gazebo.launch.py
 Run Move
 ```bash
 source ~/ros2_ws/install/setup.bash
-ros2 launch ur3_move userCommandNode.launch.py
+#ros2 launch ur3_move userCommandNode.launch.py
+ros2 run ur3_move userCommandNode
 ```
 
 Clean Installation
