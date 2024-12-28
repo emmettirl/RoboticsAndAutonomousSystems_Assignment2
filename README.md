@@ -58,6 +58,13 @@
 [//]: # (ros2 launch ur3_description ur3_rviz.launch.py)
 [//]: # (```)
 
+
+Clean Installation
+```shell
+sudo rm -rf build install log
+```
+
+
 Build Project
 ```bash
 source /opt/ros/jazzy/setup.bash
@@ -77,14 +84,11 @@ Run Move
 source ~/ros2_ws/install/setup.bash
 #ros2 run ur3_move userCommandNode.py
 #ros2 run ur3_move userInputNode.py
-ros2 run ur3_move UR3MoveNode.py
+#ros2 run ur3_move UR3MoveNode.py # Requires the joint_trajectory_controller_spawner to be disabled in ur3_gazebo.launch.py
+ros2 run ur3_move UR3MoveActionClient.py # Requires the robot_controller_spawner to be disabled in ur3_gazebo.launch.py 
 ```
+[ur3_gazebo.launch.py](src/ur3_description/launch/ur3_gazebo.launch.py)
 
-
-Clean Installation
-```shell
-sudo rm -rf build install log
-```
 
 
 [//]: # (check for controller)
