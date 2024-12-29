@@ -11,7 +11,7 @@ import time
 from sensor_msgs.msg import JointState
 import threading
 
-
+# Constants
 SLEEP_TIME = 3
 STEP_SIZE = 0.75
 MAX_ITERATIONS = 100
@@ -60,15 +60,15 @@ class UR3RLEnvironment(Node):
         ]
 
     def reset(self):
-        """Reset the environment to the initial state."""
-        self.reset_environment()
+        # Reset the environment to the initial state.
+        self.send_goal([0.0] * 6)
+        time.sleep(SLEEP_TIME * 2)
         self.joint_positions = [0.0] * 6
         self.current_iteration = 0
         self.initial_distance_to_goal = np.linalg.norm(self.calculate_end_effector_position() - self.goal_position)
         return self.get_obs()
 
     def step(self, action):
-        """Take an action in the environment and return the new state, reward, and done flag."""
         self.set_action(action)
         state = self.get_obs()
         reward = self.compute_reward()
@@ -76,7 +76,6 @@ class UR3RLEnvironment(Node):
         return state, reward, done
 
     def set_action(self, action):
-        """Define what each action will do."""
         joint_index = action // 2
         direction = 1 if action % 2 == 0 else -1
         self.joint_positions[joint_index] += direction * STEP_SIZE
@@ -84,11 +83,9 @@ class UR3RLEnvironment(Node):
         self.send_goal(self.joint_positions)
 
     def get_obs(self):
-        """Return current observation/state."""
         return self.joint_positions
 
     def is_done(self):
-        """Return true if current episode has finished, false otherwise."""
         end_effector_position = self.calculate_end_effector_position()
         distance_to_goal = np.linalg.norm(end_effector_position - self.goal_position)
         done = distance_to_goal < DISTANCE_THRESHOLD
@@ -98,7 +95,6 @@ class UR3RLEnvironment(Node):
         return done or self.current_iteration >= self.max_iterations
 
     def compute_reward(self):
-        """Return the reward for each step."""
         if self.is_done():
             end_effector_position = self.calculate_end_effector_position()
             distance_to_goal = np.linalg.norm(end_effector_position - self.goal_position)
@@ -106,13 +102,8 @@ class UR3RLEnvironment(Node):
                 return REWARD_GOAL
         return REWARD_STEP
 
-    def reset_environment(self):
-        """Return robot to its initial pose (all joints at 0.0 radians)."""
-        self.send_goal([0.0] * 6)
-        time.sleep(SLEEP_TIME*2)
 
     def send_goal(self, joint_positions):
-        """Send a goal to the robot."""
         self._action_client.wait_for_server()
 
         goal_msg = FollowJointTrajectory.Goal()
@@ -158,7 +149,6 @@ class UR3RLEnvironment(Node):
                 [0, 0, 0, 1]
             ])
 
-        # Extract DH parameters
         d1 = 0.1519
         a2 = -0.24365
         a3 = -0.21325
@@ -166,7 +156,6 @@ class UR3RLEnvironment(Node):
         d5 = 0.08535
         d6 = 0.0819
 
-        # Joint angles (replace with actual joint states from '/joint_states')
         theta1, theta2, theta3, theta4, theta5, theta6 = self.joint_positions
 
         # Compute transformation matrices
@@ -182,14 +171,15 @@ class UR3RLEnvironment(Node):
 
         # Extract position from the final transformation matrix
         end_effector_position = T_final[:3, 3]
+        # print (end_effector_position)
+        self.get_logger().info(
+            f'End effector position: {end_effector_position}, Joint positions: {self.joint_positions}, GOAL_POSITION: {self.goal_position}')
         return end_effector_position
 
     def discretize_state(self, state):
-        """Discretize the continuous state."""
         return tuple(np.round(state, 1))
 
     def choose_action(self, state):
-        """Choose an action based on epsilon-greedy policy."""
         state = tuple(state)  # Convert state to a tuple
         if random.uniform(0, 1) < self.epsilon:
             action = random.randint(0, 11)  # 6 joints * 2 directions
@@ -199,7 +189,6 @@ class UR3RLEnvironment(Node):
         return action
 
     def update_q_table_q_learning(self, state, action, reward, next_state):
-        """Update Q-table using Q-learning."""
         state = self.discretize_state(state)
         next_state = self.discretize_state(next_state)
         if state not in self.q_table:
@@ -212,7 +201,6 @@ class UR3RLEnvironment(Node):
         self.q_table[state][action] += self.alpha * td_error
 
     def update_q_table_sarsa(self, state, action, reward, next_state, next_action):
-        """Update Q-table using SARSA."""
         state = self.discretize_state(state)
         next_state = self.discretize_state(next_state)
         if state not in self.q_table:

@@ -97,7 +97,6 @@ class UserInputNode(Node):
 
 
     def get_end_effector_pose(self):
-        # Define the transformation matrices for each joint
         def transformation_matrix(joint_angle, joint_offset, link_length, twist_angle):
             return np.array([
                 [np.cos(joint_angle), -np.sin(joint_angle) * np.cos(twist_angle),
@@ -108,20 +107,16 @@ class UserInputNode(Node):
                 [0, 0, 0, 1]
             ])
 
-        # Example DH parameters for a 6-DOF robot arm (you need to replace these with your actual parameters)
         dh_params = [
-            (self.current_joint_positions.get('shoulder_pan_joint', 0.0), 0.0, 0.1, np.pi / 2),
-            (self.current_joint_positions.get('shoulder_lift_joint', 0.0), 0.0, 0.5, 0.0),
-            (self.current_joint_positions.get('elbow_joint', 0.0), 0.0, 0.3, 0.0),
-            (self.current_joint_positions.get('wrist_1_joint', 0.0), 0.0, 0.2, np.pi / 2),
-            (self.current_joint_positions.get('wrist_2_joint', 0.0), 0.0, 0.1, -np.pi / 2),
-            (self.current_joint_positions.get('wrist_3_joint', 0.0), 0.0, 0.1, 0.0)
+            (self.current_joint_positions.get('shoulder_pan_joint', 0.0), 0.1519, 0.0, np.pi / 2),
+            (self.current_joint_positions.get('shoulder_lift_joint', 0.0), 0.0, -0.24365, 0.0),
+            (self.current_joint_positions.get('elbow_joint', 0.0), 0.0, -0.21325, 0.0),
+            (self.current_joint_positions.get('wrist_1_joint', 0.0), 0.11235, 0.0, np.pi / 2),
+            (self.current_joint_positions.get('wrist_2_joint', 0.0), 0.08535, 0.0, -np.pi / 2),
+            (self.current_joint_positions.get('wrist_3_joint', 0.0), 0.0819, 0.0, 0.0)
         ]
 
-        # Initialize the final transformation matrix as an identity matrix
         final_transformation = np.eye(4)
-
-        # Multiply the transformation matrices of each joint
         for params in dh_params:
             final_transformation = np.dot(final_transformation, transformation_matrix(*params))
 

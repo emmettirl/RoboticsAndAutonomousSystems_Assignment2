@@ -94,7 +94,9 @@ ros2 run ur3_move UR3RLEnvironment.py
 Source the ROS2 setup.bash file, then run the desired node. Only one of the above should be run at a time. Comment out any others.
 
 UR3MoveNode.py requires the joint_trajectory_controller_spawner to be disabled in ur3_gazebo.launch.py
+
 UR3MoveActionClient.py # requires the robot_controller_spawner to be disabled in ur3_gazebo.launch.py 
+
 This is done by comment out the controller spawner in the launch file, and commenting the name out of the list of Nodes.
 
 [ur3_gazebo.launch.py](src/ur3_description/launch/ur3_gazebo.launch.py)

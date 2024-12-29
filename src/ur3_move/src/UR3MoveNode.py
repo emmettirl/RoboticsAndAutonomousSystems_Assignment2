@@ -10,7 +10,7 @@ class UR3MoveNode(Node):
     def __init__(self):
         super().__init__('ur3_move_node')
         self.publisher_ = self.create_publisher(Float64MultiArray, '/forward_position_controller/commands', 10)
-        self.timer = self.create_timer(0.1, self.timer_callback)  # 10 Hz
+        self.timer = self.create_timer(0.1, self.timer_callback)
         self.start_time = time.time()
 
     def timer_callback(self):
