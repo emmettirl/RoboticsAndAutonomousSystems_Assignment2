@@ -8,9 +8,12 @@ from trajectory_msgs.msg import JointTrajectoryPoint
 import numpy as np
 import random
 import time
+from sensor_msgs.msg import JointState
+import threading
 
-SLEEP_TIME = 2
-STEP_SIZE = 0.2
+
+SLEEP_TIME = 3
+STEP_SIZE = 0.75
 MAX_ITERATIONS = 100
 LEARNING_RATE = 0.1
 DISCOUNT_FACTOR = 0.99
@@ -19,7 +22,6 @@ GOAL_POSITION = np.array([0.03, 0.385, 0.03])
 DISTANCE_THRESHOLD = 0.02
 REWARD_GOAL = 100
 REWARD_STEP = -1
-
 
 class UR3RLEnvironment(Node):
     def __init__(self):
@@ -35,6 +37,27 @@ class UR3RLEnvironment(Node):
         self.gamma = DISCOUNT_FACTOR
         self.epsilon = EXPLORATION_RATE
         self.initial_distance_to_goal = None
+
+        self.joint_state_subscription = self.create_subscription(
+            JointState,
+            '/joint_states',
+            self.joint_state_callback,
+            10
+        )
+
+        self.spin_thread = threading.Thread(target=rclpy.spin, args=(self,))
+        self.spin_thread.start()
+
+    def joint_state_callback(self, msg):
+        joint_positions_dict = dict(zip(msg.name, msg.position))
+        self.joint_positions = [
+            joint_positions_dict.get('shoulder_pan_joint', 0.0),
+            joint_positions_dict.get('shoulder_lift_joint', 0.0),
+            joint_positions_dict.get('elbow_joint', 0.0),
+            joint_positions_dict.get('wrist_1_joint', 0.0),
+            joint_positions_dict.get('wrist_2_joint', 0.0),
+            joint_positions_dict.get('wrist_3_joint', 0.0),
+        ]
 
     def reset(self):
         """Reset the environment to the initial state."""
@@ -57,6 +80,7 @@ class UR3RLEnvironment(Node):
         joint_index = action // 2
         direction = 1 if action % 2 == 0 else -1
         self.joint_positions[joint_index] += direction * STEP_SIZE
+        self.joint_positions[joint_index] = np.clip(self.joint_positions[joint_index], -np.pi, np.pi)
         self.send_goal(self.joint_positions)
 
     def get_obs(self):
@@ -85,6 +109,7 @@ class UR3RLEnvironment(Node):
     def reset_environment(self):
         """Return robot to its initial pose (all joints at 0.0 radians)."""
         self.send_goal([0.0] * 6)
+        time.sleep(SLEEP_TIME*2)
 
     def send_goal(self, joint_positions):
         """Send a goal to the robot."""
@@ -119,40 +144,44 @@ class UR3RLEnvironment(Node):
     def get_result_callback(self, future):
         result = future.result().result
         if result.error_code == FollowJointTrajectory.Result.SUCCESSFUL:
-            self.get_logger().info('Goal reached successfully')
+            # self.get_logger().info('Goal reached successfully')
+            pass
+
+
 
     def calculate_end_effector_position(self):
-        """Calculate the end effector position based on the current joint positions."""
-
-        def transformation_matrix(joint_angle, joint_offset, link_length, twist_angle):
+        def dh_transform(theta, d, a, alpha):
             return np.array([
-                [np.cos(joint_angle), -np.sin(joint_angle) * np.cos(twist_angle),
-                 np.sin(joint_angle) * np.sin(twist_angle), link_length * np.cos(joint_angle)],
-                [np.sin(joint_angle), np.cos(joint_angle) * np.cos(twist_angle),
-                 -np.cos(joint_angle) * np.sin(twist_angle), link_length * np.sin(joint_angle)],
-                [0, np.sin(twist_angle), np.cos(twist_angle), joint_offset],
+                [np.cos(theta), -np.sin(theta) * np.cos(alpha), np.sin(theta) * np.sin(alpha), a * np.cos(theta)],
+                [np.sin(theta), np.cos(theta) * np.cos(alpha), -np.cos(theta) * np.sin(alpha), a * np.sin(theta)],
+                [0, np.sin(alpha), np.cos(alpha), d],
                 [0, 0, 0, 1]
             ])
 
-        # Example DH parameters for a 6-DOF robot arm (you need to replace these with your actual parameters)
-        dh_params = [
-            (self.joint_positions[0], 0.0, 0.1, np.pi / 2),
-            (self.joint_positions[1], 0.0, 0.5, 0.0),
-            (self.joint_positions[2], 0.0, 0.3, 0.0),
-            (self.joint_positions[3], 0.0, 0.2, np.pi / 2),
-            (self.joint_positions[4], 0.0, 0.1, -np.pi / 2),
-            (self.joint_positions[5], 0.0, 0.1, 0.0)
-        ]
+        # Extract DH parameters
+        d1 = 0.1519
+        a2 = -0.24365
+        a3 = -0.21325
+        d4 = 0.11235
+        d5 = 0.08535
+        d6 = 0.0819
 
-        # Initialize the final transformation matrix as an identity matrix
-        final_transformation = np.eye(4)
+        # Joint angles (replace with actual joint states from '/joint_states')
+        theta1, theta2, theta3, theta4, theta5, theta6 = self.joint_positions
 
-        # Multiply the transformation matrices of each joint
-        for params in dh_params:
-            final_transformation = np.dot(final_transformation, transformation_matrix(*params))
+        # Compute transformation matrices
+        T1 = dh_transform(theta1, d1, 0, np.pi / 2)
+        T2 = dh_transform(theta2, 0, a2, 0)
+        T3 = dh_transform(theta3, 0, a3, 0)
+        T4 = dh_transform(theta4, d4, 0, np.pi / 2)
+        T5 = dh_transform(theta5, d5, 0, -np.pi / 2)
+        T6 = dh_transform(theta6, d6, 0, 0)
 
-        # Extract the position of the end effector from the final transformation matrix
-        end_effector_position = final_transformation[:3, 3]
+        # Compound transformation
+        T_final = T1 @ T2 @ T3 @ T4 @ T5 @ T6
+
+        # Extract position from the final transformation matrix
+        end_effector_position = T_final[:3, 3]
         return end_effector_position
 
     def discretize_state(self, state):
@@ -197,6 +226,7 @@ class UR3RLEnvironment(Node):
     def train(self, num_episodes):
         for episode in range(num_episodes):
             self.get_logger().info(f'Starting episode {episode + 1}')
+            self.reset()
             state = self.reset()
             done = False
             while not done:
